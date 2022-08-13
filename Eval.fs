@@ -70,6 +70,13 @@ let rec eval_expr (env : value env) (e : expr) : value =
     | BinOp (e1, "+", e2) -> binop (+) (+) env e1 e2
     | BinOp (e1, "-", e2) -> binop (-) (-) env e1 e2
     | BinOp (e1, "*", e2) -> binop ( * ) ( * ) env e1 e2
+    | BinOp (e1, "/", e2) -> binop ( / ) ( / ) env e1 e2
+    | BinOp (e1, "%", e2) -> binop ( % ) ( % ) env e1 e2
+    
+    | BinOp (e1, "<", e2) -> logop ( < ) ( < ) env e1 e2
+    
+    //    | BinOp (e1, ("<" | "<=" | ">" | ">=" | "=" | "<>" as op), e2) ->
+
     // TODO: implement other binary ops
 
     | _ -> unexpected_error "eval_expr: unsupported expression: %s [AST: %A]" (pretty_expr e) e
@@ -82,4 +89,12 @@ and binop op_int op_float env e1 e2 =
     | VLit (LFloat x), VLit (LFloat y) -> VLit (LFloat (op_float x y))
     | VLit (LInt x), VLit (LFloat y) -> VLit (LFloat (op_float (float x) y))
     | VLit (LFloat x), VLit (LInt y) -> VLit (LFloat (op_float x (float y)))
-    | _ -> unexpected_error "eval_expr: illegal operands in binary operator (+): %s + %s" (pretty_value v1) (pretty_value v2)
+    | _ -> unexpected_error "eval_expr: illegal operands in binary operator: %s (+) %s" (pretty_value v1) (pretty_value v2)
+    
+    //maybe add log_op to above?
+and logop op_int op_float env e1 e2 =
+    let v1 = eval_expr env e1
+    let v2 = eval_expr env e2
+    match v1, v2 with
+    | VLit (LInt x), VLit (LInt y) -> VLit (LBool (op_int x y))
+    | _ -> unexpected_error "eval_expr: illegal operands in logical operator: %s (<) %s" (pretty_value v1) (pretty_value v2)

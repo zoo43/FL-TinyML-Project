@@ -1,0 +1,2 @@
+Divisione per 0? --> Il compilatore crasha
+Capire meglio come fare operatori logici senza ripetere codici

@@ -27,6 +27,9 @@ C:\Users\matte\Desktop\TinyML\bin\Debug\zh-Hant\FSharp.Core.resources.dll
 C:\Users\matte\Desktop\TinyML\obj\Debug\TinyML.fsproj.CopyComplete
 C:\Users\matte\Desktop\TinyML\obj\Debug\TinyML.exe
 C:\Users\matte\Desktop\TinyML\obj\Debug\TinyML.pdb
+C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\obj\Debug\TinyML.fsproj.AssemblyReference.cache
+C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\obj\Debug\TinyML.fsproj.SuggestedBindingRedirects.cache
+C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\obj\Debug\TinyML.exe.config
 C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\bin\Debug\TinyML.exe.config
 C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\bin\Debug\TinyML.XML
 C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\bin\Debug\TinyML.exe
@@ -50,9 +53,6 @@ C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\bin\Debug\ru\FSharp.C
 C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\bin\Debug\tr\FSharp.Core.resources.dll
 C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\bin\Debug\zh-Hans\FSharp.Core.resources.dll
 C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\bin\Debug\zh-Hant\FSharp.Core.resources.dll
-C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\obj\Debug\TinyML.fsproj.AssemblyReference.cache
-C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\obj\Debug\TinyML.fsproj.SuggestedBindingRedirects.cache
-C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\obj\Debug\TinyML.exe.config
 C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\obj\Debug\TinyML.fsproj.CopyComplete
 C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\obj\Debug\TinyML.exe
 C:\Users\matte\Desktop\FL-TinyML-Project\FL-TinyML-Project\obj\Debug\TinyML.pdb
