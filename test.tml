@@ -1,0 +1,27 @@
+
+(* comment 
+   in many 
+   lines *)
+
+// line comment
+
+(*
+let f x y = (x, y) in
+let g x = f x x
+in ()
+
+
+let f = fun x -> (x + 1, if x then 1 else 2)
+*)
+
+//At the design level, what we want?
+//Case of + operator, Do I want a language with an overloaded + operator? (No, less powerful)
+//Easy solution: no, I don't want overloaded, + operator is different from types (+ only for int, if inferences see a + we can say int!)
+//Hard solution:
+
+8 + 1
+
+
+
+
+

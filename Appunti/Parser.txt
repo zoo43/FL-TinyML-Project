@@ -1,0 +1,17 @@
+For every symbol I produce a token! Lexer into Parser
+
+'(' Open bracket i produce BRA ')' closed bracket i produce KET
+
+Parser type 2 recognizer, Lexer type 3 recognizer
+
+Grammar Rule (parser) for if then else:
+
+Can be written as an atom of the tuple (An element of the tuple)
+
+case with then and case with then else:
+
+$2 , $4, $6 indica il numero di parola della riga da prendere (expr dopo if è $2)
+
+Yuck produces and F# file that produces the token and converting function and PARSING TABLE!
+You don't need to read it (parser.fs). Here typecheck works, evaluation not.
+
