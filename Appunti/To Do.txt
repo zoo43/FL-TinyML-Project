@@ -1,2 +1,3 @@
 Divisione per 0? --> Il compilatore crasha
-Capire meglio come fare operatori logici senza ripetere codici
+Discutere op. logici con Cecio
+Then con printf non va, bo...? And e or vanno però

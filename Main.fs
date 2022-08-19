@@ -11,6 +11,7 @@ open TinyML.Ast
 
 let parse_from_TextReader rd filename parser = Parsing.parse_from_TextReader SyntaxError rd filename (1, 1) parser Lexer.tokenize Parser.tokenTagToTokenId
     
+    //type env and value env
 let interpret_expr tenv venv e =
     #if DEBUG
     printfn "AST:\t%A\npretty:\t%s" e (pretty_expr e)
@@ -66,7 +67,14 @@ let main_interactive () =
 
             printfn "val %s : %s = %s" x (pretty_ty t) (pretty_value v)
                 
-    
+
+let rec map f l =
+    match l with
+    | [] -> []
+    | x :: xs -> f x :: map f xs
+   
+   
+
 [<EntryPoint>]
 let main argv =
     (*let r =
@@ -76,8 +84,14 @@ let main argv =
             0
         with e -> printfn "\nexception caught: %O" e; 1
     Console.ReadLine () |> ignore
-    r*)
-    //main_interpreter argv.[0]
+    r*)    
+    let f = fun (x:int) -> x + 1 in f 5
+    
+   // main_interpreter argv.[0]
+    
+    //let c = if 5>4 && 5>6 then 10 else 0 in printf "%d" c
+   // let rec iter_new_form = fun f -> fun l -> match l with | [] -> () | x :: xs -> f x; iter_new_form f xs in let g = iter_new_form (fun x -> printf "%d" x) in g [1;2;3]
     main_interactive ()
+    
     Console.ReadLine () |> ignore
     0
