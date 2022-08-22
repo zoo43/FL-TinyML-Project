@@ -71,17 +71,20 @@ Se inferisco tutto e poi compongo ho errore al tempo della composizione
 
 //DEVO FARE IL PATTERN MATCH, SE SONO ENTRAMBI TYPENAME ALLORA O ERRORE SE SONO TIPI DIVERSI O SOSTITUZIONE VUOTA,
 //POI I CASI CON I TYVAR che sono le variabili libere p.5/5 pagina 3
-let unify (t1 : ty) (t2 : ty) : subst = //empty list, empty substitution
+let rec unify (t1 : ty) (t2 : ty) : subst = //empty list, empty substitution
     match (t1 , t2) with
     | (TyName t1, TyName t2) -> 
         match t1 with
-        | t2 -> [] //empty subs, no need to subs two var of the same type
+        | t2 when t1 = t2 -> [] //empty subs, no need to subs two var of the same type
         | _ -> unexpected_error "Type inference error: you're trying to substitute two variables with different types"
-    | (TyVar t1, TyName t2) -> [] //In these two cases I apply the substitution (don't know how)
-    | (TyName t1, TyVar t2) -> [] //In these two cases I apply the substitution (don't know how)
+    | (TyVar t1, t2) -> [(t1,t2)] 
+    | (t1, TyVar t2) -> [(t2,t1)] 
+    | (TyArrow(a,b) , TyArrow(c,d)) -> unify a b @ unify c d
+    | _ -> unexpected_error "You're trying to unify something that can't be unified"
     //I think that subst is a list of tyvar and if this tyvar is the same type of tyName? Not sure of that, I apply subs!
   //  | (TyArrow t1, TyArrow t2) -> [] //In that case is compose subs, what does it mean? Idk
     
+
 
     //Ripensato: se t è uguale a tyvar nella lista di sub allora t diventa il tipo! Se c==a allora t=b
 let rec map(f,l) c =
@@ -100,7 +103,10 @@ let apply_subst (t : ty) (s : subst) : ty =
     t //I think that this is good ... ?
     
 // TODO implement this
-let compose_subst (s1 : subst) (s2 : subst) : subst = s1 @ s2 //With 2 subs I have to apply composition
+let compose_subst (s1 : subst) (s2 : subst) : subst = s1 @ s2  //With 2 subs I have to apply composition
+    
+    //Non so
+
 
 //Generalization, operation we perform after having typed the right part of the let binded, If there are type variables left, you quantify that, We need a way to quantify that
 //Free variables are the occurences of the type variables. An algorithm to calculate the occurences of a type variable. Variables not binded by let
@@ -138,7 +144,7 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
     match e with
    // | App (e1, e2) -> //We already have the application case (not really)
 
-
+    
     //We can produce an application term here on the fly
     | BinOp (e1,"+",e2) -> 
         typeinfer_expr env (App (App (Var "+", e1), e2)) //Application where the left side is a variable plus and e1 that are a left side of an application where the right side is e2
@@ -147,8 +153,7 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
     | UnOp (op, e) ->
         typeinfer_expr env (App (Var op, e)) //This works if we prepopulate env.
   
-      
-
+    //
     | _ -> failwith "not implemented"
 
 
