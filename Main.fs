@@ -68,12 +68,16 @@ let main_interactive () =
             printfn "val %s : %s = %s" x (pretty_ty t) (pretty_value v)
                 
 
-let rec map f l =
-    match l with
-    | [] -> []
-    | x :: xs -> f x :: map f xs
-   
-   
+
+
+
+
+let matchTuple (a,b) c = 
+    match b with
+            | a when b=c -> 10000
+            | 0 -> a
+            | _ -> 1717171
+
 
 [<EntryPoint>]
 let main argv =
@@ -85,8 +89,10 @@ let main argv =
         with e -> printfn "\nexception caught: %O" e; 1
     Console.ReadLine () |> ignore
     r*)    
-    let f = fun (x:int) -> x + 1 in f 5
-    
+    let l = [(1,10);(2,10);(3,0);(4,10);(5,0)]
+    let c = 12
+    let l2 = map (matchTuple, l) c
+    printf "%O" l2
    // main_interpreter argv.[0]
     
     //let c = if 5>4 && 5>6 then 10 else 0 in printf "%d" c

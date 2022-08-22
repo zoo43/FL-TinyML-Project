@@ -64,13 +64,41 @@ Se sostituisco subito, la prima inferisce x come int, applico sub all'ambiente e
 Se inferisco tutto e poi compongo ho errore al tempo della composizione
 
 *)
+    
+//TyName , TyArrow , TyVar = 'a , TyTuple
 
 // TODO implement this
-let unify (t1 : ty) (t2 : ty) : subst = [] //empty list, empty substitution
 
+//DEVO FARE IL PATTERN MATCH, SE SONO ENTRAMBI TYPENAME ALLORA O ERRORE SE SONO TIPI DIVERSI O SOSTITUZIONE VUOTA,
+//POI I CASI CON I TYVAR che sono le variabili libere p.5/5 pagina 3
+let unify (t1 : ty) (t2 : ty) : subst = //empty list, empty substitution
+    match (t1 , t2) with
+    | (TyName t1, TyName t2) -> 
+        match t1 with
+        | t2 -> [] //empty subs, no need to subs two var of the same type
+        | _ -> unexpected_error "Type inference error: you're trying to substitute two variables with different types"
+    | (TyVar t1, TyName t2) -> [] //In these two cases I apply the substitution (don't know how)
+    | (TyName t1, TyVar t2) -> [] //In these two cases I apply the substitution (don't know how)
+    //I think that subst is a list of tyvar and if this tyvar is the same type of tyName? Not sure of that, I apply subs!
+  //  | (TyArrow t1, TyArrow t2) -> [] //In that case is compose subs, what does it mean? Idk
+    
+
+    //Ripensato: se t è uguale a tyvar nella lista di sub allora t diventa il tipo! Se c==a allora t=b
+let rec map(f,l) c =
+    match l with
+    | [] -> []
+    | x :: xs -> f x c :: map (f,xs) c 
+
+let find_subs (a,b) t = 
+    if t = TyName(a) then b else t
+    
+    
 // TODO implement this
-let apply_subst (t : ty) (s : subst) : ty = t 
-
+let apply_subst (t : ty) (s : subst) : ty = 
+    let res = map (find_subs, s) t
+    printf "%O" res
+    t //I think that this is good ... ?
+    
 // TODO implement this
 let compose_subst (s1 : subst) (s2 : subst) : subst = s1 @ s2 //With 2 subs I have to apply composition
 
