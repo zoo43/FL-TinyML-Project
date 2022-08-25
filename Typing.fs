@@ -3,7 +3,7 @@
 * Typing.fs: typing algorithms
 *)
 
-//Immaginare i test, come testo questo?
+//Immaginare i test, come testo questo? 
 
 
 // f x + 1 , applica f con x e poi fa più 1
@@ -49,13 +49,13 @@ We can collect all the let binding and all the substitution will have some type 
 
 Apply substitution incrementally (type inference produce a type and a substitution), and I compose with the subterm (if there is some) else, I return.
 That type and subs can be return without applying the subs to the type, or returns the variable substituted
-Tupla ogni pezzo produce un tipo e una sub, poi fai composizione perchè un pezzo ti può servire per le altre
+Tupla ogni pezzo produce un tipo e una sub, poi fai composizione perchè un pezzo ti può servire per le altre 
 e la prima la applichi già al risultato della seconda invece che inferire tutto e POI fare la composizione. La composizione delle subs deve poter dare errori:
 Devono avere domini disgiunti
 
 Esempio operatori aritmetici monomorfi:
 let f = fun x -> (x + 1, x +. 1.2)
-faccio unificare x a int e quello dopo a float (abbiamo due sub alfa che va a float e a int, devo verificare che i domini siano disgiunti, non posso inferire due cose diverse per
+faccio unificare x a int e quello dopo a float (abbiamo due sub alfa che va a float e a int, devo verificare che i domini siano disgiunti, non posso inferire due cose diverse per 
 la stessa type variable.
 Quando componi non devi produrre ambiguità, altrimenti dovrebbe produrre type error
 
@@ -64,49 +64,49 @@ Se sostituisco subito, la prima inferisce x come int, applico sub all'ambiente e
 Se inferisco tutto e poi compongo ho errore al tempo della composizione
 
 *)
-
-// TODO implement this
-let unify (t1 : ty) (t2 : ty) : subst = [] //empty list, empty substitution
+    
+//TyName , TyArrow , TyVar = 'a , TyTuple
 
 //DEVO FARE IL PATTERN MATCH, SE SONO ENTRAMBI TYPENAME ALLORA O ERRORE SE SONO TIPI DIVERSI O SOSTITUZIONE VUOTA,
 //POI I CASI CON I TYVAR che sono le variabili libere p.5/5 pagina 3
 let rec unify (t1 : ty) (t2 : ty) : subst = //empty list, empty substitution
     match (t1 , t2) with
-    | (TyName t1, TyName t2) ->
+    | (TyName t1, TyName t2) -> 
         match t1 with
         | t2 when t1 = t2 -> [] //empty subs, no need to subs two var of the same type
         | _ -> unexpected_error "Type inference error: you're trying to substitute two variables with different types"
-    | (TyVar t1, t2) -> [(t1,t2)]
-    | (t1, TyVar t2) -> [(t2,t1)]
+    | (TyVar t1, t2) -> [(t1,t2)] 
+    | (t1, TyVar t2) -> [(t2,t1)] 
     | (TyArrow(a,b) , TyArrow(c,d)) -> unify a b @ unify c d
     | _ -> unexpected_error "You're trying to unify something that can't be unified"
     //I think that subst is a list of tyvar and if this tyvar is the same type of tyName? Not sure of that, I apply subs!
   //  | (TyArrow t1, TyArrow t2) -> [] //In that case is compose subs, what does it mean? Idk
-
+    
 
 
     //Ripensato: se t è uguale a tyvar nella lista di sub allora t diventa il tipo! Se c==a allora t=b
 let rec map(f,l) c =
     match l with
     | [] -> []
-    | x :: xs -> f x c :: map (f,xs) c
+    | x :: xs -> f x c :: map (f,xs) c 
 
-let find_subs (a,b) t =
-    if t = TyName(a) then b else t
-
-
-// TODO implement this
-let apply_subst (t : ty) (s : subst) : ty = t
-
-// TODO implement this
-let compose_subst (s1 : subst) (s2 : subst) : subst = s1 @ s2  //With 2 subs I have to apply composition
-
+let find_subs (a,b) t = 
+    if t = TyVar(a) then b else t
+    
+let apply_subst (t : ty) (s : subst) : ty = 
+    let res = map (find_subs, s) t
+    printf "%O" res
+    t //I think that this is good ... ?
+    
+let compose_subst (s1 : subst) (s2 : subst) : subst =   //With 2 subs I have to apply composition
+     let res = List.distinct (s1@s2)
+     res
     //Non so
 
 
 //Generalization, operation we perform after having typed the right part of the let binded, If there are type variables left, you quantify that, We need a way to quantify that
 //Free variables are the occurences of the type variables. An algorithm to calculate the occurences of a type variable. Variables not binded by let
-//We match the type.
+//We match the type. 
 let rec freevars_ty (t : ty) : tyvar Set =
     match t with
     | TyName _ -> Set.empty
@@ -133,22 +133,40 @@ let gamma0 = [
 ]
 
 // TODO for exam
+let rec compose list =
+   match list with
+   | head :: tail ->compose_subst head (compose tail)
+   | [] -> []
+
 
 //Probably we don't want to have operator like operators, but implemented natively
 //Man mano che ho i tipi giusti li applico all'ambiente
 let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
     match e with
    // | App (e1, e2) -> //We already have the application case (not really)
-
+    | Lit (LInt _) -> (TyInt,[])
+    | Lit (LFloat x) -> (TyFloat,[])
+    | Lit (LString _) -> (TyString,[])
+    | Lit (LChar _) -> (TyChar,[])
+    | Lit (LBool _) -> (TyBool,[])
+    | Lit LUnit -> (TyUnit,[])
+    | Tuple es -> 
+    // l is the list given by inferring all the elements of the typle
+        let l = (List.map (typeinfer_expr env) es)
+    //For every substitution that i have on this list i call compose_subst and i only have one subst with all substitution needed on the tuple (s)
+        let s = compose (List.map snd l)
+    //List of the types in this tuple (t)
+        let t = List.map fst l
+        (TyTuple(t),s)
 
     //We can produce an application term here on the fly
-    | BinOp (e1,"+",e2) ->
+    | BinOp (e1,"+",e2) -> 
         typeinfer_expr env (App (App (Var "+", e1), e2)) //Application where the left side is a variable plus and e1 that are a left side of an application where the right side is e2
-        //We can "op" instead of "+", here we support all arithmetic operators
+        //We can "op" instead of "+", here we support all arithmetic operators 
 
     | UnOp (op, e) ->
         typeinfer_expr env (App (Var op, e)) //This works if we prepopulate env.
-
+  
     //
     | _ -> failwith "not implemented"
 
@@ -158,7 +176,7 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
 
 // type checker
 //
-
+    
 let rec typecheck_expr (env : ty env) (e : expr) : ty =
     match e with
     | Lit (LInt _) -> TyInt
@@ -173,17 +191,17 @@ let rec typecheck_expr (env : ty env) (e : expr) : ty =
         t
 
     | Lambda (x, None, e) -> unexpected_error "typecheck_expr: unannotated lambda is not supported"
-
+    
     | Lambda (x, Some t1, e) ->
         let t2 = typecheck_expr ((x, t1) :: env) e
         TyArrow (t1, t2)
-
+   
     | App (e1, e2) ->
         let t1 = typecheck_expr env e1
         let t2 = typecheck_expr env e2
         match t1 with
         | TyArrow (l, r) ->
-            if l = t2 then r
+            if l = t2 then r 
             else type_error "wrong application: argument type %s does not match function domain %s" (pretty_ty t2) (pretty_ty l)
         | _ -> type_error "expecting a function on left side of application, but got %s" (pretty_ty t1)
 
@@ -212,7 +230,7 @@ let rec typecheck_expr (env : ty env) (e : expr) : ty =
 
     | LetRec (f, None, e1, e2) ->
         unexpected_error "typecheck_expr: unannotated let rec is not supported"
-
+        
     | LetRec (f, Some tf, e1, e2) ->
         let env0 = (f, tf) :: env
         let t1 = typecheck_expr env0 e1
@@ -233,7 +251,7 @@ let rec typecheck_expr (env : ty env) (e : expr) : ty =
         | TyInt, TyFloat
         | TyFloat, TyInt -> TyFloat
         | _ -> type_error "binary operator expects two int operands, but got %s %s %s" (pretty_ty t1) op (pretty_ty t2)
-
+     
 
     //Logical operator
     | BinOp (e1, ("<" | "<=" | ">" | ">=" | "=" | "<>" as op), e2) ->
@@ -258,7 +276,7 @@ let rec typecheck_expr (env : ty env) (e : expr) : ty =
         let t = typecheck_expr env e
         if t <> TyBool then type_error "unary not expects a bool operand, but got %s" (pretty_ty t)
         TyBool
-
+            
     | UnOp ("-", e) ->
         let t = typecheck_expr env e
         match t with

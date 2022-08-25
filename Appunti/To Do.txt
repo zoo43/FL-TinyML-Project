@@ -2,16 +2,18 @@ Divisione per 0? --> Il compilatore crasha
 Discutere op. logici con Cecio
 Then con printf non va, bo...? And e or vanno però
 
-Dal main chiamo unify quando c'è bisogno, torno una subs e aggiungo alla lista di subs già presenti, poi la applico con la funzione.
-Forse devo farlo uno alla volta? E perchè lista allora? Sembra avere più senso prima
-
 se t = s in quella posizione allora t diventa l'altro pezzo di s
 
 Subst è una lista di tuple, come accedo a primo/secondo valore di quello?
 
+Unify , Componi i diversi degli unify con compose subst e  infine chiami apply_subs con tutto (Per ogni free var)
+
+
+
 
 TypeChecker poi chiama type inferece
-
-Unify , Componi i diversi degli unify con compose subst e  infine chiami apply_subs con tutto (Per ogni free var)
 Type inference, per ogni possibile situazione (come type check) fagli inferire il tipo
 Da typeinference richiamamo typeinferece di sotto casi (vedi esempio operatore binario) e in caso serva, unify
+
+Dal main chiamo unify quando c'è bisogno, torno una subs e aggiungo alla lista di subs già presenti, poi la applico con la funzione.
+Forse devo farlo uno alla volta? E perchè lista allora? Sembra avere più senso prima

@@ -79,25 +79,33 @@ let rec map(f,l) =
 let rec map f l =
     match l with
     | [] -> []
-    | x :: xs -> f x :: map f xs
+    | x :: xs -> f x :: map f xs*)
 
+
+let rec sum list =
+   match list with
+   | head :: tail -> head + sum tail
+   | [] -> 0
 
 
 [<EntryPoint>]
 let main argv =
     (*let r =
-        try
+        try 
             if argv.Length < 1 then main_interactive ()
             else main_interpreter argv.[0]
             0
         with e -> printfn "\nexception caught: %O" e; 1
     Console.ReadLine () |> ignore
-    r*)
-       // main_interpreter argv.[0]
-
+    r*)    
+    let l = [1;6;3]
+    let res = sum l
+    printf "%O" res
+   // main_interpreter argv.[0]
+    
     //let c = if 5>4 && 5>6 then 10 else 0 in printf "%d" c
    // let rec iter_new_form = fun f -> fun l -> match l with | [] -> () | x :: xs -> f x; iter_new_form f xs in let g = iter_new_form (fun x -> printf "%d" x) in g [1;2;3]
   //  main_interactive ()
-
+    
     Console.ReadLine () |> ignore
     0
