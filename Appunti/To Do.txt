@@ -12,6 +12,6 @@ Subst è una lista di tuple, come accedo a primo/secondo valore di quello?
 
 TypeChecker poi chiama type inferece
 
-Unify , Componi i diversi degli unify con compose subst e  infine chiami apply_subs con tutto
+Unify , Componi i diversi degli unify con compose subst e  infine chiami apply_subs con tutto (Per ogni free var)
 Type inference, per ogni possibile situazione (come type check) fagli inferire il tipo
 Da typeinference richiamamo typeinferece di sotto casi (vedi esempio operatore binario) e in caso serva, unify

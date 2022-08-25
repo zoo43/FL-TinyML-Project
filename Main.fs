@@ -67,16 +67,18 @@ let main_interactive () =
 
             printfn "val %s : %s = %s" x (pretty_ty t) (pretty_value v)
                 
+                (*
+let rec map(f,l) =
+    match l with
+    | [] -> []
+    | x :: xs -> 
+        match l2 with
+        | [] -> x::xs
+        | y :: ys -> f x y :: map(f,xs,ys)
 
-
-
-
-
-let matchTuple (a,b) c = 
-    match b with
-            | a when b=c -> 10000
-            | 0 -> a
-            | _ -> 1717171
+let check_presence (x, y) =
+    if x=y then x else x@y
+    *)
 
 
 [<EntryPoint>]
@@ -89,15 +91,15 @@ let main argv =
         with e -> printfn "\nexception caught: %O" e; 1
     Console.ReadLine () |> ignore
     r*)    
-    let l = [(1,10);(2,10);(3,0);(4,10);(5,0)]
-    let c = 12
-    let l2 = map (matchTuple, l) c
-    printf "%O" l2
+    let l = [1;2;3;4;5;6]
+    let l2 = [2;4;6;8]
+    let res = List.distinct (l@l2)
+    printf "%O" res
    // main_interpreter argv.[0]
     
     //let c = if 5>4 && 5>6 then 10 else 0 in printf "%d" c
    // let rec iter_new_form = fun f -> fun l -> match l with | [] -> () | x :: xs -> f x; iter_new_form f xs in let g = iter_new_form (fun x -> printf "%d" x) in g [1;2;3]
-    main_interactive ()
+  //  main_interactive ()
     
     Console.ReadLine () |> ignore
     0
