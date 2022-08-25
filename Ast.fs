@@ -24,7 +24,7 @@ let unexpected_error fmt = throw_formatted UnexpectedError fmt
 // AST type definitions
 //
 
-type tyvar = string
+type tyvar = int
 
 type ty =
     | TyName of string
