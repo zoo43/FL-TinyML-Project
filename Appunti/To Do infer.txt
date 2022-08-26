@@ -1,4 +1,4 @@
-
+//Operatori aritmetici in teoria sono facili
 
     | Var x ->
         let _, t = List.find (fun (y, _) -> x = y) env
@@ -25,19 +25,6 @@
         | None -> ()
         | Some t -> if t <> t1 then type_error "type annotation in let binding of %s is wrong: exptected %s, but got %s" x (pretty_ty t) (pretty_ty t1)
         typecheck_expr ((x, t1) :: env) e2
-
-    | IfThenElse (e1, e2, e3o) ->
-        let t1 = typecheck_expr env e1
-        if t1 <> TyBool then type_error "if condition must be a bool, but got a %s" (pretty_ty t1)
-        let t2 = typecheck_expr env e2
-        match e3o with
-        | None ->
-            if t2 <> TyUnit then type_error "if-then without else requires unit type on then branch, but got %s" (pretty_ty t2)
-            TyUnit
-        | Some e3 ->
-            let t3 = typecheck_expr env e3
-            if t2 <> t3 then type_error "type mismatch in if-then-else: then branch has type %s and is different from else branch type %s" (pretty_ty t2) (pretty_ty t3)
-            t2
 
     | LetRec (f, None, e1, e2) ->
         unexpected_error "typecheck_expr: unannotated let rec is not supported"

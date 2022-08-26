@@ -167,7 +167,34 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
     | UnOp (op, e) ->
         typeinfer_expr env (App (Var op, e)) //This works if we prepopulate env.
   
-    //
+   // | Lambda (x, None, e) -> I infer the type of x and None will be infer type with x and e..?
+    
+    //In case some t use unification
+    | Let (x, tyo, e1, e2) ->
+        let k = match tyo with
+        | None -> 
+            let t1 = typeinfer_expr env e1
+            typeinfer_expr env e2
+        | Some t ->  unexpected_error "Not implemented"
+        k
+        //| Some t -> if t <> t1 then type_error "type annotation in let binding of %s is wrong: exptected %s, but got %s" x (pretty_ty t) (pretty_ty t1)
+       // typeinfer_expr ((x, t1) :: env) e2
+     
+    | IfThenElse (e1, e2, e3o) ->
+        let t1 = typeinfer_expr env e1
+        let s = unify (fst t1) (TyBool) 
+        let t2 = typeinfer_expr env e2
+        match e3o with
+        | None ->
+            let u = unify(fst t2)(TyUnit) 
+            (TyUnit,[])
+        | Some e3 ->
+            let t3 = typeinfer_expr env e3
+            (fst t2 ,unify (fst t2) (fst t3))
+            
+        
+
+        
     | _ -> failwith "not implemented"
 
 
