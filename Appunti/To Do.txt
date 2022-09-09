@@ -8,7 +8,7 @@ Subst è una lista di tuple, come accedo a primo/secondo valore di quello?
 
 Unify , Componi i diversi degli unify con compose subst e  infine chiami apply_subs con tutto (Per ogni free var)
 
-
+Scheme = unione di tipi, una lista di tyvar per cui quel tipo andrebbe bene come subst
 
 
 TypeChecker poi chiama type inferece

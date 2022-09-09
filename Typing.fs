@@ -67,6 +67,13 @@ Se inferisco tutto e poi compongo ho errore al tempo della composizione
     
 //TyName , TyArrow , TyVar = 'a , TyTuple
 
+let mutable tyvar_cont = 0
+
+let add_tyvar =
+    let v = TyVar(tyvar_cont)
+    tyvar_cont <- tyvar_cont + 1
+    v
+
 //DEVO FARE IL PATTERN MATCH, SE SONO ENTRAMBI TYPENAME ALLORA O ERRORE SE SONO TIPI DIVERSI O SOSTITUZIONE VUOTA,
 //POI I CASI CON I TYVAR che sono le variabili libere p.5/5 pagina 3
 let rec unify (t1 : ty) (t2 : ty) : subst = //empty list, empty substitution
@@ -78,6 +85,7 @@ let rec unify (t1 : ty) (t2 : ty) : subst = //empty list, empty substitution
     | (TyVar t1, t2) -> [(t1,t2)] 
     | (t1, TyVar t2) -> [(t2,t1)] 
     | (TyArrow(a,b) , TyArrow(c,d)) -> unify a b @ unify c d
+    //| (TyArrow(_,_)),(TyVar _)  -> []
     | _ -> unexpected_error "You're trying to unify something that can't be unified"
     //I think that subst is a list of tyvar and if this tyvar is the same type of tyName? Not sure of that, I apply subs!
   //  | (TyArrow t1, TyArrow t2) -> [] //In that case is compose subs, what does it mean? Idk
@@ -139,6 +147,10 @@ let rec compose list =
    | [] -> []
 
 
+//let prova scheme =
+  //  let (scheme s) = scheme
+   // ()
+
 //Probably we don't want to have operator like operators, but implemented natively
 //Man mano che ho i tipi giusti li applico all'ambiente
 let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
@@ -158,43 +170,129 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
     //List of the types in this tuple (t)
         let t = List.map fst l
         (TyTuple(t),s)
-
-    //We can produce an application term here on the fly
-    | BinOp (e1,"+",e2) -> 
-        typeinfer_expr env (App (App (Var "+", e1), e2)) //Application where the left side is a variable plus and e1 that are a left side of an application where the right side is e2
-        //We can "op" instead of "+", here we support all arithmetic operators 
-
-    | UnOp (op, e) ->
-        typeinfer_expr env (App (Var op, e)) //This works if we prepopulate env.
   
-   // | Lambda (x, None, e) -> I infer the type of x and None will be infer type with x and e..?
-    
-    //In case some t use unification
-    | Let (x, tyo, e1, e2) ->
-        let k = match tyo with
-        | None -> 
-            let t1 = typeinfer_expr env e1
-            typeinfer_expr env e2
-        | Some t ->  unexpected_error "Not implemented"
-        k
-        //| Some t -> if t <> t1 then type_error "type annotation in let binding of %s is wrong: exptected %s, but got %s" x (pretty_ty t) (pretty_ty t1)
-       // typeinfer_expr ((x, t1) :: env) e2
-     
     | IfThenElse (e1, e2, e3o) ->
         let t1 = typeinfer_expr env e1
         let s = unify (fst t1) (TyBool) 
-        let t2 = typeinfer_expr env e2
+        let t2 = typeinfer_expr env  e2
         match e3o with
         | None ->
             let u = unify(fst t2)(TyUnit) 
             (TyUnit,[])
         | Some e3 ->
             let t3 = typeinfer_expr env e3
-            (fst t2 ,unify (fst t2) (fst t3))
+            let s2 = unify (fst t2) (fst t3)
+            (fst t2 , compose_subst(s)(s2))
             
-        
+    | BinOp (e1, ("+" | "-" | "/" | "%" | "*" as op), e2) ->
+        let t1 = typeinfer_expr env e1
+        let t2 = typeinfer_expr env e2
+        (fst t1 , unify(fst t1) (fst t2))
 
+    | BinOp (e1, ("<" | "<=" | ">" | ">=" | "=" | "<>" as op), e2) ->
+        let t1 = typeinfer_expr env e1
+        let t2 = typeinfer_expr env e2
+        (TyBool , unify(fst t1) (fst t2))
+
+    | BinOp (e1, ("and" | "or" as op), e2) ->
+        let t1 = typeinfer_expr env e1
+        let t2 = typeinfer_expr env e2
+        let s1 = unify (fst t1) (TyBool)
+        let s2 = unify (fst t2) (TyBool)
+        (TyBool , compose_subst(s1)(s2))
+
+    | BinOp (_, op, _) -> unexpected_error "typecheck_expr: unsupported binary operator (%s)" op
+
+    | UnOp ("not" , e) ->
+        let t = typeinfer_expr env e
+        let s = unify (fst t)(TyBool)
+        (TyBool,s)
+    
+    | UnOp ("-", e) ->
+        let t = typeinfer_expr env e
+        let s = match (fst(t)) with
+                | TyInt -> unify (fst t)(TyInt)
+                | TyFloat -> unify (fst t)(TyFloat)
+                | _ -> unexpected_error "Unco rrect use of operan -, type that can use that operator are int and float, given:  %s" (pretty_ty (fst t))
+        ((fst t),s)
+
+        //I search if the var is present on the env, yes means that I have to return that type, no means that I have to sign in the env that it's a tyVar
+  (*  | Var x ->
+        let res  = List.tryFind (fun (y, _) -> x = y) env    //tryFind
+        match res with
+        | Some(res) -> let (Forall (_,t)) = snd(res) in (t,[])
+        | None -> 
+            let c: tyvar list = []
+            let env0 = (x, Forall (c,TyVar(c.Head))) :: env
+            (TyVar(c.Head),[]) *)
+
+    | Lambda (x, Some t, e) ->  
+        let s = typeinfer_expr env e
+        let u = unify (fst s) (t)
+        let final_subs = compose_subst(u)(snd s)
+        ((fst s),final_subs)
+
+
+        //TO DO: Empty list is wrong
+        //Poi passi l'env con aggiunto sull'id x un nuovo schema con ty pari alla nuova tyvar creata
+    | Lambda (x, None, e) ->  
+        let v = add_tyvar
+        let env0 = (x, Forall ([],v)) :: env
+        let s = typeinfer_expr env0 e 
+        s
+
+
+                //type subst = (tyvar * ty) list
+
+
+        //let x = e1 in e2
+    | Let (x, tyo, e1, e2) ->
+        let t1 = typeinfer_expr env e1
+        let c = List.map fst (snd(t1))
+        match tyo with
+        | None -> 
+            let v = add_tyvar
+            let env1 = (x, Forall (c,v))::env
+            let t2 = typeinfer_expr env1  e2 //add free var alfa to env
+            let final_subs = compose_subst(snd t1)(snd t2)
+            (fst(t2),final_subs)
+            
+        | Some tyo ->  //Do I have to check that t1 is equal to tyo?
+            let env0 = (x, Forall (c,fst(t1)))::env 
+            let s = unify(tyo)(fst t1)
+            let t2 = typeinfer_expr env0 e2
+            let final_subs = compose_subst (compose_subst(snd t1)(snd t2)) (s)
+            (fst(t2),final_subs)
+           
+            
+            //infinite n = letrec ns = cons n ns in ns
+
+
+    | LetRec (f, None, e1, e2) ->
+        unexpected_error "typecheck_expr: unannotated let rec is not supported"
         
+    //| LetRec (f, Some tf, e1, e2) ->
+       //Add to env the type of the function (with subs) and... do things...? 
+       (* let env0 = (f, tf) :: env
+        let t1 = typeinfer_expr env0 e1
+        match t1 with
+        | TyArrow _ -> ()
+        | _ -> type_error "let rec is restricted to functions, but got type %s" (pretty_ty t1)
+        if t1 <> tf then type_error "let rec type mismatch: expected %s, but got %s" (pretty_ty tf) (pretty_ty t1)*)
+           
+    //TO DO: Di base final_s = compose_subst(subst per t1)(subst per t2) compose subst con (t1;t2->Beta), poi checckare i tipi?
+    | App (e1, e2) ->
+        let t1 = typeinfer_expr env e1
+        let t2 = typeinfer_expr env e2
+        match fst (t1) with
+        | TyArrow (l, r) ->
+            let s = compose_subst (snd t1)(snd t2)
+            let ft1 = fst(t1)
+            let ft2 = TyArrow(fst(t2),r)
+            let u = unify(ft1)(ft2)
+            let final_subs = compose_subst(s)(u)
+            (l,final_subs)
+        | _ -> type_error "expecting a function on left side of application, but got %s" (pretty_ty (fst t1))
     | _ -> failwith "not implemented"
 
 

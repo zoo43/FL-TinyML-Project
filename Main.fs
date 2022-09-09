@@ -88,6 +88,7 @@ let rec sum list =
    | [] -> 0
 
 
+
 [<EntryPoint>]
 let main argv =
     (*let r =
@@ -97,8 +98,8 @@ let main argv =
             0
         with e -> printfn "\nexception caught: %O" e; 1
     Console.ReadLine () |> ignore
-    r*)    
-    let l = [1;6;3]
+    r*)     
+    let l = [(1);(2);(3)]
     let res = sum l
     printf "%O" res
    // main_interpreter argv.[0]

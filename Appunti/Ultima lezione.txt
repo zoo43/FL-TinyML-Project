@@ -1,0 +1,47 @@
+I must transform t1 into a scheme before adding it to the env, 
+to do that I must do some quantification.
+
+sigma1 = quantification of all free type variables in t1 : t1
+
+In quantification I DON'T have to add all free vars to env, only the ones not already binded by the env.
+
+fv = function taking a type and producing a vector of type variables
+
+freevars_ty given a type provides the free vars of that type. The notable case useful is freevars_ty.
+
+Not a definito of free vars for type scheme, given!
+This to distinguish which of them (tyvars) are free or already binded by the env.
+
+Transforming a type in a typescheme is called "generalization". We promote the type to a polymorphic type.
+Only let rule do that.
+
+We're not quantyfying the var that we just invented. 
+
+VAR RULE
+
+When I find an identifier x I must produce some type and some subs
+
+if x belongs to gamma, tau is gamma(x)
+how do I demote a scheme to a type? The environment are type schemes, with var I can retrieve (I think) a type scheme, but I have to return a type.
+
+"Istanciates something general into something less general"
+How? -> INSTANTIATION
+
+How: 
+We remove that tyvar and then refresh the quantified ty vars. a -> b , only a is quantified, I produce c -> b
+refresh: produce a new tyvar (with a new name)
+
+I create a new subs mapping for each alfa new names, Then we apply this subs to tau and we have the corrispondent type.
+
+Semantics rule = EVALUATION (rewatch) and other typing
+
+
+LETREC:
+
+Like let, but inside e1 x can appear, I must extend the env with x itself! (What typescheme, idk it's type) -> tyvar (We hope that unification will do the job for us).
+By unification it refines multiple times
+
+let rec f = fun x -> f (x - 1) understand the funct takes and int and goes on with unification, unification does the magic
+It works in the same way as a lambda (Type scheme with nothing quantified)
+
+UNIFICATION = I want that these two types are the same!

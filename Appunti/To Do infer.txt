@@ -1,24 +1,3 @@
-//Operatori aritmetici in teoria sono facili
-
-    | Var x ->
-        let _, t = List.find (fun (y, _) -> x = y) env
-        t
-
-    | Lambda (x, None, e) -> unexpected_error "typecheck_expr: unannotated lambda is not supported"
-    
-    | Lambda (x, Some t1, e) ->
-        let t2 = typecheck_expr ((x, t1) :: env) e
-        TyArrow (t1, t2)
-   
-    | App (e1, e2) ->
-        let t1 = typecheck_expr env e1
-        let t2 = typecheck_expr env e2
-        match t1 with
-        | TyArrow (l, r) ->
-            if l = t2 then r 
-            else type_error "wrong application: argument type %s does not match function domain %s" (pretty_ty t2) (pretty_ty l)
-        | _ -> type_error "expecting a function on left side of application, but got %s" (pretty_ty t1)
-
     | Let (x, tyo, e1, e2) ->
         let t1 = typecheck_expr env e1
         match tyo with
@@ -38,46 +17,3 @@
         if t1 <> tf then type_error "let rec type mismatch: expected %s, but got %s" (pretty_ty tf) (pretty_ty t1)
         typecheck_expr env0 e2
 
-    //Arithmetic operator
-    //It Matches this operator, as means that we can substitute the string with op. we typecheck left and right, if both are the same, it's ok and work, else error
-    | BinOp (e1, ("+" | "-" | "/" | "%" | "*" as op), e2) ->
-        let t1 = typecheck_expr env e1
-        let t2 = typecheck_expr env e2
-        match t1, t2 with
-        | TyInt, TyInt -> TyInt
-        | TyFloat, TyFloat -> TyFloat
-        | TyInt, TyFloat
-        | TyFloat, TyInt -> TyFloat
-        | _ -> type_error "binary operator expects two int operands, but got %s %s %s" (pretty_ty t1) op (pretty_ty t2)
-     
-
-    //Logical operator
-    | BinOp (e1, ("<" | "<=" | ">" | ">=" | "=" | "<>" as op), e2) ->
-        let t1 = typecheck_expr env e1
-        let t2 = typecheck_expr env e2
-        match t1, t2 with
-        | TyInt, TyInt -> ()
-        | _ -> type_error "binary operator expects two numeric operands, but got %s %s %s" (pretty_ty t1) op (pretty_ty t2)
-        TyBool
-
-    | BinOp (e1, ("and" | "or" as op), e2) ->
-        let t1 = typecheck_expr env e1
-        let t2 = typecheck_expr env e2
-        match t1, t2 with
-        | TyBool, TyBool -> ()
-        | _ -> type_error "binary operator expects two bools operands, but got %s %s %s" (pretty_ty t1) op (pretty_ty t2)
-        TyBool
-
-    | BinOp (_, op, _) -> unexpected_error "typecheck_expr: unsupported binary operator (%s)" op
-
-    | UnOp ("not", e) ->
-        let t = typecheck_expr env e
-        if t <> TyBool then type_error "unary not expects a bool operand, but got %s" (pretty_ty t)
-        TyBool
-            
-    | UnOp ("-", e) ->
-        let t = typecheck_expr env e
-        match t with
-        | TyInt -> TyInt
-        | TyFloat -> TyFloat
-        | _ -> type_error "unary negation expects a numeric operand, but got %s" (pretty_ty t)
