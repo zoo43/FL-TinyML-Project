@@ -81,13 +81,18 @@ let rec map f l =
     | [] -> []
     | x :: xs -> f x :: map f xs*)
 
+let prova x c =
+    x+c
 
 let rec sum list =
    match list with
    | head :: tail -> head + sum tail
    | [] -> 0
 
-
+let rec fold f z l =
+    match l with
+    | [] -> z
+    | x :: xs -> f (fold f z xs) x
 
 [<EntryPoint>]
 let main argv =
@@ -99,8 +104,9 @@ let main argv =
         with e -> printfn "\nexception caught: %O" e; 1
     Console.ReadLine () |> ignore
     r*)     
-    let l = [(1);(2);(3)]
-    let res = sum l
+    let l = [1;2;3]
+    let res = List.map(fun x -> (x,0)) l 
+
     printf "%O" res
    // main_interpreter argv.[0]
     

@@ -146,6 +146,10 @@ let rec compose list =
    | head :: tail ->compose_subst head (compose tail)
    | [] -> []
 
+let split_elements l x =
+    l::x
+   
+let set_to_list s = Set.fold (fun l se -> se::l) [] s //l is the accumulator, we add every pieces of the set in a list
 
 //let prova scheme =
   //  let (scheme s) = scheme
@@ -217,14 +221,21 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
         ((fst t),s)
 
         //I search if the var is present on the env, yes means that I have to return that type, no means that I have to sign in the env that it's a tyVar
-  (*  | Var x ->
-        let res  = List.tryFind (fun (y, _) -> x = y) env    //tryFind
-        match res with
-        | Some(res) -> let (Forall (_,t)) = snd(res) in (t,[])
-        | None -> 
-            let c: tyvar list = []
-            let env0 = (x, Forall (c,TyVar(c.Head))) :: env
-            (TyVar(c.Head),[]) *)
+    | Var x ->
+        let res  = List.find (fun (y, _) -> x = y) env    //tryFind
+        let k = freevars_scheme(snd(res))
+        let tv_list = set_to_list(k)
+        let sub = List.map(fun x -> (x,add_tyvar)) tv_list  
+        let (Forall(_,t)) = snd(res)
+        (t,sub)
+        //How do I find the type?
+        //With that I have to refresh the quantified vars, and we have the subs.
+        //match res with
+        //| Some -> let (Forall (_,t)) = snd(res) in (t,[])
+        //| None -> 
+        //let c: tyvar list = set_to_list res
+        //let env0 = (x, Forall (c,TyVar(c.Head))) :: env
+        
 
     | Lambda (x, Some t, e) ->  
         let s = typeinfer_expr env e
@@ -233,16 +244,13 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
         ((fst s),final_subs)
 
 
-        //TO DO: Empty list is wrong
-        //Poi passi l'env con aggiunto sull'id x un nuovo schema con ty pari alla nuova tyvar creata
+
     | Lambda (x, None, e) ->  
         let v = add_tyvar
-        let env0 = (x, Forall ([],v)) :: env
+        let set = freevars_ty(v)
+        let env0 = (x, Forall (set_to_list(set),v)) :: env
         let s = typeinfer_expr env0 e 
         s
-
-
-                //type subst = (tyvar * ty) list
 
 
         //let x = e1 in e2
@@ -252,12 +260,13 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
         match tyo with
         | None -> 
             let v = add_tyvar
-            let env1 = (x, Forall (c,v))::env
+            let set = freevars_ty(v)
+            let env1 = (x, Forall (set_to_list(set),v))::env
             let t2 = typeinfer_expr env1  e2 //add free var alfa to env
             let final_subs = compose_subst(snd t1)(snd t2)
             (fst(t2),final_subs)
             
-        | Some tyo ->  //Do I have to check that t1 is equal to tyo?
+        | Some tyo -> 
             let env0 = (x, Forall (c,fst(t1)))::env 
             let s = unify(tyo)(fst t1)
             let t2 = typeinfer_expr env0 e2
