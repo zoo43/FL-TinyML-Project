@@ -45,3 +45,17 @@ let rec f = fun x -> f (x - 1) understand the funct takes and int and goes on wi
 It works in the same way as a lambda (Type scheme with nothing quantified)
 
 UNIFICATION = I want that these two types are the same!
+
+Let me bind the name of the func to the env with a type variable, then it understands how function is used and then by unification it understands the type of the function
+
+We need to produce a type and a subs, like always, very similar to let binding, but we have to add the possibility that the identifier compares (Need to bind it to the env)
+I infer e1 and e2 and i compose the subst. e2 is inferend in an env extended with the identifier x bound to a type scheme that we just generalize after inferring its type.
+How do we generalize that?
+Generalize tau:  Quantify its variables in such a way that the free vars of tau - free vars of gamma
+
+
+
+
+
+
+

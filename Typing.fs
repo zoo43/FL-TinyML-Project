@@ -205,7 +205,6 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
         let s2 = unify (fst t2) (TyBool)
         (TyBool , compose_subst(s1)(s2))
 
-    | BinOp (_, op, _) -> unexpected_error "typecheck_expr: unsupported binary operator (%s)" op
 
     | UnOp ("not" , e) ->
         let t = typeinfer_expr env e
@@ -267,27 +266,32 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
             (fst(t2),final_subs)
             
         | Some tyo -> 
-            let env0 = (x, Forall (c,fst(t1)))::env 
             let s = unify(tyo)(fst t1)
+            let env0 = (x, Forall (c,fst(t1)))::env 
             let t2 = typeinfer_expr env0 e2
             let final_subs = compose_subst (compose_subst(snd t1)(snd t2)) (s)
             (fst(t2),final_subs)
-           
-            
             //infinite n = letrec ns = cons n ns in ns
 
 
-    | LetRec (f, None, e1, e2) ->
-        unexpected_error "typecheck_expr: unannotated let rec is not supported"
-        
-    //| LetRec (f, Some tf, e1, e2) ->
-       //Add to env the type of the function (with subs) and... do things...? 
-       (* let env0 = (f, tf) :: env
-        let t1 = typeinfer_expr env0 e1
-        match t1 with
-        | TyArrow _ -> ()
-        | _ -> type_error "let rec is restricted to functions, but got type %s" (pretty_ty t1)
-        if t1 <> tf then type_error "let rec type mismatch: expected %s, but got %s" (pretty_ty tf) (pretty_ty t1)*)
+            //let set = freevars_ty(v)
+
+    | LetRec (f, tyo, e1, e2) ->
+        let v = add_tyvar
+        let set = freevars_ty(v)
+        let env1 = (f, Forall (set_to_list(set),v))::env
+        let t1 = typeinfer_expr env1 e1
+        match tyo with
+        | Some(tyo) -> 
+            let u = unify(tyo)(fst(t1))
+            let t2 = typeinfer_expr env1 e2
+            let final_subs = compose_subst(compose_subst (snd t1)(snd t2))(u)
+            (fst(t2),final_subs)
+        | None ->         
+            let t2 = typeinfer_expr env1 e2
+            let final_subs = compose_subst(snd t1)(snd t2)
+            (fst(t2),final_subs)
+       
            
     //TO DO: Di base final_s = compose_subst(subst per t1)(subst per t2) compose subst con (t1;t2->Beta), poi checckare i tipi?
     | App (e1, e2) ->
@@ -295,11 +299,10 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
         let t2 = typeinfer_expr env e2
         match fst (t1) with
         | TyArrow (l, r) ->
-            let s = compose_subst (snd t1)(snd t2)
             let ft1 = fst(t1)
             let ft2 = TyArrow(fst(t2),r)
             let u = unify(ft1)(ft2)
-            let final_subs = compose_subst(s)(u)
+            let final_subs = compose_subst(compose_subst (snd t1)(snd t2))(u)
             (l,final_subs)
         | _ -> type_error "expecting a function on left side of application, but got %s" (pretty_ty (fst t1))
     | _ -> failwith "not implemented"
