@@ -16,9 +16,9 @@ let interpret_expr tenv venv e =
     #if DEBUG
     printfn "AST:\t%A\npretty:\t%s" e (pretty_expr e)
     #endif
-    let t = Typing.typecheck_expr tenv e
+    let t,s = Typing.typeinfer_expr tenv e
     #if DEBUG
-    printfn "type:\t%s" (pretty_ty t)
+    printfn "type:\t%s subs : %O" (pretty_ty t) (s)
     #endif
     let v = Eval.eval_expr venv e
     #if DEBUG
@@ -43,76 +43,41 @@ let main_interpreter filename =
 
 
 //All have a list of environments, when you start if we pass without an empty list, but with a list we something inside. A small library of symbol
-//This is a trick!
 //We would like the empty envinroment [] at venv
 let main_interactive () =
     printfn "entering interactive mode..."
-    let mutable tenv = Typing.gamma0
-    let mutable venv = []
+    let mutable tenv = Typing.gamma0 //Environmet for typing
+    //let mutable tenv = []
+    let mutable venv = Eval.delta0 //Environment for evaluation
+    //let mutable venv = []
     while true do
         trap <| fun () ->
             printf "\n> "
             stdout.Flush ()
             let x, (t, v) =
-                match parse_from_TextReader stdin "LINE" Parser.interactive with
+                match parse_from_TextReader stdin "LINE" Parser.interactive with 
                 | IExpr e ->
                     "it", interpret_expr tenv venv e
 
                 | IBinding (_, x, _, _ as b) ->
                     let t, v = interpret_expr tenv venv (LetIn (b, Var x)) // TRICK: put the variable itself as body after the in
                     // update global environments
-                    tenv <- (x, t) :: tenv
+                    // tenv <-q (x, t) :: tenv
+                    let dummy_scheme = Forall ([], t)
+                    tenv <- (x, dummy_scheme) :: tenv
                     venv <- (x, v) :: venv
                     x, (t, v)
 
             printfn "val %s : %s = %s" x (pretty_ty t) (pretty_value v)
 
-                (*
-let rec map(f,l) =
-    match l with
-    | [] -> []
-    | x :: xs ->
-        match l2 with
-        | [] -> x::xs
-        | y :: ys -> f x y :: map(f,xs,ys)
-
-let rec map f l =
-    match l with
-    | [] -> []
-    | x :: xs -> f x :: map f xs*)
-
-let prova x c =
-    x+c
-
-let rec sum list =
-   match list with
-   | head :: tail -> head + sum tail
-   | [] -> 0
-
-let rec fold f z l =
-    match l with
-    | [] -> z
-    | x :: xs -> f (fold f z xs) x
 
 [<EntryPoint>]
 let main argv =
-    (*let r =
-        try 
-            if argv.Length < 1 then main_interactive ()
-            else main_interpreter argv.[0]
-            0
-        with e -> printfn "\nexception caught: %O" e; 1
-    Console.ReadLine () |> ignore
-    r*)     
-    let l = [1;2;3]
-    let res = List.map(fun x -> (x,0)) l 
+    let c = fun x -> fun y -> x+y
+    let k = c 8 9
+    printf("%O") k
+    main_interactive ()
 
-    printf "%O" res
-   // main_interpreter argv.[0]
-    
-    //let c = if 5>4 && 5>6 then 10 else 0 in printf "%d" c
-   // let rec iter_new_form = fun f -> fun l -> match l with | [] -> () | x :: xs -> f x; iter_new_form f xs in let g = iter_new_form (fun x -> printf "%d" x) in g [1;2;3]
-  //  main_interactive ()
     
     Console.ReadLine () |> ignore
     0

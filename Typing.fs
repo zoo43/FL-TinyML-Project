@@ -1,33 +1,6 @@
-﻿(*
-* TinyML
-* Typing.fs: typing algorithms
-*)
-
-//Immaginare i test, come testo questo? 
-
-
-// f x + 1 , applica f con x e poi fa più 1
-// f (x + 1) applica f con (x+1)
-
-//UNEXPECTED ERROR, MEANS FOR THE DEVELOPER, you forgot to support something
-//Type error, for the user
-
-//Quando tipi una lambda butti dentro l'env una fresh variable che ha il quantificatore senza quantificazione
-//Gli do un type scheme e non gli assegno il tipo subito sennò poi non potrei toccarlo
-
-//Se mi porto dietro equazione e basta non ho direzione, (con sostituzione ce l'ho) (forse è solo roba formale questa)
-
-//Produrre un type variable e legarla a un arrow type (magari torna utile sta roba)
-//Mettendo un tipo libero dentro l'env permette di non quantificarlo e fare in modo che in futuro qualcuno possa unificarla. E' uno schema in verità a->b qualcuno potrà unificarlo più avanti
-//let rec va inferito da cosa torna e da cosa prende
-
-//Grosso da fare qui, destrezza!
-module TinyML.Typing
+﻿module TinyML.Typing
 
 open Ast
-
-
-//Define new variable for floats and an active pattern for that
 
 
 let type_error fmt = throw_formatted TypeError fmt
@@ -38,35 +11,8 @@ let type_error fmt = throw_formatted TypeError fmt
 //When you apply substitution on tyvar, I apply substitution to all!
 type subst = (tyvar * ty) list
 
-(*
-Example of substitution:
-let f x y = (x,y) in
-let g x = f x x
-in ()
 
-final type is unit
-We can collect all the let binding and all the substitution will have some type variables durign the execution of the program, printing typing env at the end will print the let bindings
-
-Apply substitution incrementally (type inference produce a type and a substitution), and I compose with the subterm (if there is some) else, I return.
-That type and subs can be return without applying the subs to the type, or returns the variable substituted
-Tupla ogni pezzo produce un tipo e una sub, poi fai composizione perchè un pezzo ti può servire per le altre 
-e la prima la applichi già al risultato della seconda invece che inferire tutto e POI fare la composizione. La composizione delle subs deve poter dare errori:
-Devono avere domini disgiunti
-
-Esempio operatori aritmetici monomorfi:
-let f = fun x -> (x + 1, x +. 1.2)
-faccio unificare x a int e quello dopo a float (abbiamo due sub alfa che va a float e a int, devo verificare che i domini siano disgiunti, non posso inferire due cose diverse per 
-la stessa type variable.
-Quando componi non devi produrre ambiguità, altrimenti dovrebbe produrre type error
-
-let f = fun x -> (x + 1, if x then 1 else 2), qua dovrebbe dare errore! non può essere sia int che bool. Erorr reporting diverso
-Se sostituisco subito, la prima inferisce x come int, applico sub all'ambiente e poi da errore quando cerco di unificare int e bool
-Se inferisco tutto e poi compongo ho errore al tempo della composizione
-
-*)
-    
-//TyName , TyArrow , TyVar = 'a , TyTuple
-
+//This variable is used to create new tyvariables
 let mutable tyvar_cont = 0
 
 let add_tyvar =
@@ -74,47 +20,10 @@ let add_tyvar =
     tyvar_cont <- tyvar_cont + 1
     v
 
-//DEVO FARE IL PATTERN MATCH, SE SONO ENTRAMBI TYPENAME ALLORA O ERRORE SE SONO TIPI DIVERSI O SOSTITUZIONE VUOTA,
-//POI I CASI CON I TYVAR che sono le variabili libere p.5/5 pagina 3
-let rec unify (t1 : ty) (t2 : ty) : subst = //empty list, empty substitution
-    match (t1 , t2) with
-    | (TyName t1, TyName t2) -> 
-        match t1 with
-        | t2 when t1 = t2 -> [] //empty subs, no need to subs two var of the same type
-        | _ -> unexpected_error "Type inference error: you're trying to substitute two variables with different types"
-    | (TyVar t1, t2) -> [(t1,t2)] 
-    | (t1, TyVar t2) -> [(t2,t1)] 
-    | (TyArrow(a,b) , TyArrow(c,d)) -> unify a b @ unify c d
-    //| (TyArrow(_,_)),(TyVar _)  -> []
-    | _ -> unexpected_error "You're trying to unify something that can't be unified"
-    //I think that subst is a list of tyvar and if this tyvar is the same type of tyName? Not sure of that, I apply subs!
-  //  | (TyArrow t1, TyArrow t2) -> [] //In that case is compose subs, what does it mean? Idk
-    
-
-
-    //Ripensato: se t è uguale a tyvar nella lista di sub allora t diventa il tipo! Se c==a allora t=b
-let rec map(f,l) c =
-    match l with
-    | [] -> []
-    | x :: xs -> f x c :: map (f,xs) c 
-
-let find_subs (a,b) t = 
-    if t = TyVar(a) then b else t
-    
-let apply_subst (t : ty) (s : subst) : ty = 
-    let res = map (find_subs, s) t
-    printf "%O" res
-    t //I think that this is good ... ?
-    
-let compose_subst (s1 : subst) (s2 : subst) : subst =   //With 2 subs I have to apply composition
-     let res = List.distinct (s1@s2)
-     res
-    //Non so
-
 
 //Generalization, operation we perform after having typed the right part of the let binded, If there are type variables left, you quantify that, We need a way to quantify that
 //Free variables are the occurences of the type variables. An algorithm to calculate the occurences of a type variable. Variables not binded by let
-//We match the type. 
+//We match the type. TyVar not binded
 let rec freevars_ty (t : ty) : tyvar Set =
     match t with
     | TyName _ -> Set.empty
@@ -124,10 +33,43 @@ let rec freevars_ty (t : ty) : tyvar Set =
     //How fold works (parameters): function applying each stage(accumulator, each element) initial state of accumulator, list we are foldin. t is our accumulator that starts empty
 
 
+let rec unify (t1 : ty) (t2 : ty) : subst = //empty list, empty substitution
+    match (t1 , t2) with
+    | TyName tn1, TyName tn2 -> if tn1 = tn2 then [] else type_error "unify: cannot unify %s with %s" tn1 tn2
+    | TyVar tv1, TyVar tv2 -> if tv1 = tv2 then [] else type_error "unify: cannot unify" //Doesn't work
+    | (TyVar tv, tn)  //Check if variables are free, if they are then I can create the substitution, else I can't 
+    | (tn, TyVar tv) -> if not (Set.contains tv (freevars_ty tn)) then [(tv, tn)] else type_error "unify: cannot unify %s with %s" (pretty_ty tn) (pretty_ty (TyVar tv))
+    | (TyArrow(a,b) , TyArrow(c,d)) -> unify a c @ unify b d
+    | _ -> type_error "You're trying to unify something that can't be unified dog"
+
+   //I substitute the tyvar with the type!
+let apply_subst (t : ty) (s : subst) : ty = 
+    let rec apply_subst_item sub ct =
+        let tv, t0 = sub
+        match ct with
+        | TyName _ -> ct
+        | TyVar ttv -> if ttv = tv then t0 else ct
+        | TyArrow (t1, t2) -> TyArrow (apply_subst_item sub t1, apply_subst_item sub t2)
+        | TyTuple (ts) -> TyTuple (List.map (apply_subst_item sub) ts)
+    List.foldBack (apply_subst_item) s t
+    
+let compose_subst (s1 : subst) (s2 : subst) : subst =   //With 2 subs I have to apply composition
+     let res = List.distinct (s1@s2)
+     res
+
+
+
     //We find All free vars of the type, and then we substract from the list of tyvar
     //The element of the set is polymorphic, the hierarchy is not polymorphic. We have to use a library if we want a polymorphic set
 let freevars_scheme (Forall (tvs, t)) =
     Set.difference (freevars_ty t) (Set.ofList tvs)
+
+    //Given an environment returns a tyvar Set empty in the empty case
+    //I obtain the free variables in the environment
+let rec freevars_env (env: scheme env) : tyvar Set =
+    match env with
+    | [] -> Set.empty
+    | (_, sc) :: envs -> Set.union (freevars_scheme sc) (freevars_env envs)  
 
 // type inference
 //
@@ -135,25 +77,31 @@ let freevars_scheme (Forall (tvs, t)) =
 //List of pairs
 //Just a definition, when you call the type inference in the main, you're basic environment tenv won't be empty but will be gamma0
 let gamma0 = [
-    ("+", TyArrow (TyInt, TyArrow (TyInt, TyInt)))
-    ("-", TyArrow (TyInt, TyArrow (TyInt, TyInt)))
-
+    ("+", Forall ([], TyArrow (TyInt, TyArrow (TyInt, TyInt))))
+    ("-", Forall ([], TyArrow (TyInt, TyArrow (TyInt, TyInt))))
+    ("u-", Forall ([], TyArrow (TyInt, TyInt)))
+    ("*", Forall ([], TyArrow (TyInt, TyArrow (TyInt, TyInt))))
+    ("/", Forall ([], TyArrow (TyInt, TyArrow (TyInt, TyInt))))
+    ("%", Forall ([], TyArrow (TyInt, TyArrow (TyInt, TyInt))))
+    ("+.", Forall ([], TyArrow (TyFloat, TyArrow (TyFloat, TyFloat))))
+    ("-.", Forall ([], TyArrow (TyFloat, TyArrow (TyFloat, TyFloat))))
+    ("u-.", Forall ([], TyArrow (TyFloat, TyFloat)))
+    ("*.", Forall ([], TyArrow (TyFloat, TyArrow (TyFloat, TyFloat))))
+    ("/.", Forall ([], TyArrow (TyFloat, TyArrow (TyFloat, TyFloat))))
+    ("%.", Forall ([], TyArrow (TyFloat, TyArrow (TyFloat, TyFloat))))
+    ("and", Forall ([], TyArrow (TyBool, TyArrow (TyBool, TyBool))))
+    ("or", Forall ([], TyArrow (TyBool, TyArrow (TyBool, TyBool))))
+    ("not", Forall ([], TyArrow (TyBool, TyBool)))
 ]
 
-// TODO for exam
 let rec compose list =
    match list with
    | head :: tail ->compose_subst head (compose tail)
    | [] -> []
 
-let split_elements l x =
-    l::x
    
 let set_to_list s = Set.fold (fun l se -> se::l) [] s //l is the accumulator, we add every pieces of the set in a list
 
-//let prova scheme =
-  //  let (scheme s) = scheme
-   // ()
 
 //Probably we don't want to have operator like operators, but implemented natively
 //Man mano che ho i tipi giusti li applico all'ambiente
@@ -172,144 +120,188 @@ let rec typeinfer_expr (env : scheme env) (e : expr) : ty * subst =
     //For every substitution that i have on this list i call compose_subst and i only have one subst with all substitution needed on the tuple (s)
         let s = compose (List.map snd l)
     //List of the types in this tuple (t)
-        let t = List.map fst l
-        (TyTuple(t),s)
+        let t = TyTuple(List.map fst l)
+        (t,s)
   
     | IfThenElse (e1, e2, e3o) ->
-        let t1 = typeinfer_expr env e1
-        let s = unify (fst t1) (TyBool) 
-        let t2 = typeinfer_expr env  e2
-        match e3o with
-        | None ->
-            let u = unify(fst t2)(TyUnit) 
-            (TyUnit,[])
-        | Some e3 ->
-            let t3 = typeinfer_expr env e3
-            let s2 = unify (fst t2) (fst t3)
-            (fst t2 , compose_subst(s)(s2))
-            
+        let t1, s1 = typeinfer_expr env e1
+        let u = unify (t1) (TyBool) 
+        let t2, s2 = typeinfer_expr env  e2
+        let sub = compose_subst(compose_subst(s2)(s1))(u)
+        let final_subst = 
+            match e3o with
+                | None -> 
+                    let u = unify t2 TyUnit
+                    compose_subst sub u
+                | Some e3 -> 
+                    let t3,s3 = typeinfer_expr env e3
+                    let u2 = unify (t2)(t3)
+                    compose_subst(compose_subst(u2)(s3))(sub)
+        (apply_subst(t2)(final_subst),(final_subst))
+        
+          
+
     | BinOp (e1, ("+" | "-" | "/" | "%" | "*" as op), e2) ->
-        let t1 = typeinfer_expr env e1
-        let t2 = typeinfer_expr env e2
-        (fst t1 , unify(fst t1) (fst t2))
+        let t1, s1 = typeinfer_expr env e1
+        let t2, s2 = typeinfer_expr env e2
+        let s = compose_subst s1 s2
+        let t1_s = apply_subst t1 s
+        let t2_s = apply_subst t2 s
+        let t3, s3 =
+            match t1_s, t2_s with
+                | TyInt, TyInt -> TyInt, []
+                | TyVar tv, TyInt 
+                | TyInt, TyVar tv -> TyInt, unify (TyVar tv) TyInt
+
+                | TyFloat, TyFloat -> TyFloat, []
+
+                | TyVar tv, TyFloat 
+                | TyFloat, TyVar tv -> TyFloat, unify (TyVar tv) TyFloat
+
+                |TyVar tv1, TyVar tv2 -> TyInt, [tv1, TyInt] @ [tv2, TyInt] 
+                | _ -> type_error "binary operator expects two numeric homogenous operands, but got \"%s\" %s \"%s\"" (pretty_ty t1) op (pretty_ty t2)
+        let s = compose_subst s1 (compose_subst s2 s3)
+        (apply_subst t3 s, s)
+
+
 
     | BinOp (e1, ("<" | "<=" | ">" | ">=" | "=" | "<>" as op), e2) ->
-        let t1 = typeinfer_expr env e1
-        let t2 = typeinfer_expr env e2
-        (TyBool , unify(fst t1) (fst t2))
+        let t1, s1 = typeinfer_expr env e1
+        let t2, s2 = typeinfer_expr env e2
+        let s = compose_subst s1 s2
+        let t1_s = apply_subst t1 s
+        let t2_s = apply_subst t2 s
+        let t3, s3 =
+            match t1_s, t2_s with
+                | TyInt, TyInt
+                | TyFloat, TyFloat
+                | TyInt, TyFloat
+                | TyFloat, TyInt -> TyBool, []
+
+                | TyInt, TyVar tv
+                | TyVar tv, TyInt -> TyBool, unify (TyVar tv) TyInt
+                | TyFloat, TyVar tv 
+                | TyVar tv, TyFloat -> TyBool, unify (TyVar tv) TyFloat
+
+                //| TyVar tv1, TyVar tv2 -> TyBool, [tv2, TyVar tv1] // this should only work if there's a sub from the tyvars to "comparable"... at most i can say they have to be the same type
+                | _ -> type_error "binary operator expects two equivalent numeric operands, but got \"%s\" %s \"%s\"" (pretty_ty t1) op (pretty_ty t2)
+        let s = compose_subst s1 (compose_subst s2 s3)
+        (apply_subst t3 s, s)
 
     | BinOp (e1, ("and" | "or" as op), e2) ->
-        let t1 = typeinfer_expr env e1
-        let t2 = typeinfer_expr env e2
-        let s1 = unify (fst t1) (TyBool)
-        let s2 = unify (fst t2) (TyBool)
-        (TyBool , compose_subst(s1)(s2))
+        let t1, s1 = typeinfer_expr env e1
+        let t2, s2 = typeinfer_expr env e2
+        let s3 =
+            match t1, t2 with
+            | TyBool, TyBool -> []
+            | TyBool, TyVar tv
+            | TyVar tv, TyBool-> unify (TyVar tv) TyBool
+            | TyVar _tv1, TyVar _tv2 -> unexpected_error "Unexpected keyword '%s' in \"%s\"" op (pretty_expr (BinOp (e1, op, e2)))
+            | _ -> type_error "binary operator expects two bools operands, but got \"%s\" %s \"%s\"" (pretty_ty t1) op (pretty_ty t2)
+        let s = compose_subst s1 (compose_subst s2 s3)
+        let t3 = TyBool
+        (apply_subst t3 s, s)
 
 
-    | UnOp ("not" , e) ->
-        let t = typeinfer_expr env e
-        let s = unify (fst t)(TyBool)
-        (TyBool,s)
-    
+    | BinOp (_, op, _) -> unexpected_error "typecheck_expr: unsupported binary operator (%s)" op
+
+    | UnOp ("not", e) ->
+        let t, s = typeinfer_expr env e
+        if t <> TyBool then type_error "unary not expects a bool operand, but got %s" (pretty_ty t)
+        (apply_subst t s, s)
+
+            
     | UnOp ("-", e) ->
-        let t = typeinfer_expr env e
-        let s = match (fst(t)) with
-                | TyInt -> unify (fst t)(TyInt)
-                | TyFloat -> unify (fst t)(TyFloat)
-                | _ -> unexpected_error "Unco rrect use of operan -, type that can use that operator are int and float, given:  %s" (pretty_ty (fst t))
-        ((fst t),s)
+        let t, s = typeinfer_expr env e
+        let t1 = 
+            match t with
+                | TyInt -> TyInt
+                | TyFloat -> TyFloat
+                | _ -> type_error "unary negation expects a numeric operand, but got %s" (pretty_ty t)
+        (apply_subst t1 s, s)
 
-        //I search if the var is present on the env, yes means that I have to return that type, no means that I have to sign in the env that it's a tyVar
+    | UnOp (op, _) -> unexpected_error "typecheck_expr: unsupported unary operator (%s)" op
+
+        //I search if the var is present on the env, yes means that I have to return that type, no means that I have to sign in the env that it's a tyVar and refresh other vars
+        //This happen because I trust that the unify will solve that
     | Var x ->
-        let res  = List.find (fun (y, _) -> x = y) env    //tryFind
-        let k = freevars_scheme(snd(res))
-        let tv_list = set_to_list(k)
-        let sub = List.map(fun x -> (x,add_tyvar)) tv_list  
-        let (Forall(_,t)) = snd(res)
-        (t,sub)
-        //How do I find the type?
-        //With that I have to refresh the quantified vars, and we have the subs.
-        //match res with
-        //| Some -> let (Forall (_,t)) = snd(res) in (t,[])
-        //| None -> 
-        //let c: tyvar list = set_to_list res
-        //let env0 = (x, Forall (c,TyVar(c.Head))) :: env
-        
+        try
+            let instantiate s = 
+                let rec refresh vl = 
+                    match vl with  //I check if variables are found 
+                    | [] -> []
+                    | v :: vs ->  //If yes I refresh their values
+                        tyvar_cont <- tyvar_cont + 1
+                        compose_subst [(v, TyVar (tyvar_cont))] (refresh vs)
+                
+                
+                let vars, t = match s with Forall (_v, _t) -> (_v, _t)
+                let refreshed = refresh vars //I refresh all of the tyvars
+                (apply_subst t refreshed, refreshed) //Then I apply the subs
 
-    | Lambda (x, Some t, e) ->  
-        let s = typeinfer_expr env e
-        let u = unify (fst s) (t)
-        let final_subs = compose_subst(u)(snd s)
-        ((fst s),final_subs)
+            let _, sch = List.find (fun (y, _) -> x = y) env
+            instantiate sch
+        with :? System.Collections.Generic.KeyNotFoundException -> unexpected_error "Variable %s not bound in the environment\nenv:" x
+       
 
-
-
-    | Lambda (x, None, e) ->  
+    | Lambda (x, tyo, e) ->  
         let v = add_tyvar
-        let set = freevars_ty(v)
-        let env0 = (x, Forall (set_to_list(set),v)) :: env
-        let s = typeinfer_expr env0 e 
-        s
+        //I infer the type after I add my new fresh variable in the env
+        let t1, s1 = typeinfer_expr ((x, Forall ([], v)) :: env) e
+        //Then I check if the notated type is present and, in case, I unify
+        let s2 =
+            match tyo with
+                | Some tyo -> unify t1 tyo
+                | None -> []
+        let t = TyArrow (v,t1)
+        let final_subs = compose_subst s1 s2
+        (apply_subst t final_subs,final_subs)
 
 
         //let x = e1 in e2
     | Let (x, tyo, e1, e2) ->
-        let t1 = typeinfer_expr env e1
-        let c = List.map fst (snd(t1))
-        match tyo with
-        | None -> 
-            let v = add_tyvar
-            let set = freevars_ty(v)
-            let env1 = (x, Forall (set_to_list(set),v))::env
-            let t2 = typeinfer_expr env1  e2 //add free var alfa to env
-            let final_subs = compose_subst(snd t1)(snd t2)
-            (fst(t2),final_subs)
-            
-        | Some tyo -> 
-            let s = unify(tyo)(fst t1)
-            let env0 = (x, Forall (c,fst(t1)))::env 
-            let t2 = typeinfer_expr env0 e2
-            let final_subs = compose_subst (compose_subst(snd t1)(snd t2)) (s)
-            (fst(t2),final_subs)
-            //infinite n = letrec ns = cons n ns in ns
+        let t1, s1 = typeinfer_expr env e1
+        let u = 
+            match tyo with
+                | None -> []
+                | Some tyo -> unify (t1) (tyo) 
+        let not_binded = Forall (set_to_list(Set.difference( freevars_ty t1) (freevars_env env)), t1) //I add to the env the tyvars not already binded
+        let t2,s2 = typeinfer_expr ((x,not_binded)::env) e2
+        let final_subs = compose_subst(compose_subst (s1)(s2))(u)
+        (apply_subst t2 final_subs, s2)
 
-
-            //let set = freevars_ty(v)
-
+      //First I add v to the env then I evaluate e1
     | LetRec (f, tyo, e1, e2) ->
-        let v = add_tyvar
-        let set = freevars_ty(v)
-        let env1 = (f, Forall (set_to_list(set),v))::env
-        let t1 = typeinfer_expr env1 e1
+        let v = add_tyvar //This new variable represent the type of my function
+        let env1 = (f, Forall ([],v))::env //I add the name of the function to the e
+        let t1,s1 = typeinfer_expr env1 e1           
+        //I check if type option is there or not
         match tyo with
         | Some(tyo) -> 
-            let u = unify(tyo)(fst(t1))
-            let t2 = typeinfer_expr env1 e2
-            let final_subs = compose_subst(compose_subst (snd t1)(snd t2))(u)
-            (fst(t2),final_subs)
+            match tyo with
+                | TyArrow(_,TyName _) -> //On let rec optional type must be an arrow type and its codomain has to be a TyName
+                    let u = unify(tyo)(t1) //I check that ty option is the same type of t1
+                    let t2,s2 = typeinfer_expr env1 e2
+                    let final_subs = compose_subst(compose_subst (s1)(s2))(u) 
+                    (t2,final_subs)
+                | _ -> unexpected_error "on let rec the optional type must be an arrow type where the codomain is a type name, %s given " (pretty_ty tyo) tyo
         | None ->         
-            let t2 = typeinfer_expr env1 e2
-            let final_subs = compose_subst(snd t1)(snd t2)
-            (fst(t2),final_subs)
+            let t2,s2 = typeinfer_expr env1 e2
+            let final_subs = compose_subst(s1)(s2)
+            (t2,final_subs)
        
-           
-    //TO DO: Di base final_s = compose_subst(subst per t1)(subst per t2) compose subst con (t1;t2->Beta), poi checckare i tipi?
+    
     | App (e1, e2) ->
-        let t1 = typeinfer_expr env e1
-        let t2 = typeinfer_expr env e2
-        match fst (t1) with
-        | TyArrow (l, r) ->
-            let ft1 = fst(t1)
-            let ft2 = TyArrow(fst(t2),r)
-            let u = unify(ft1)(ft2)
-            let final_subs = compose_subst(compose_subst (snd t1)(snd t2))(u)
-            (l,final_subs)
-        | _ -> type_error "expecting a function on left side of application, but got %s" (pretty_ty (fst t1))
-    | _ -> failwith "not implemented"
+        let t1, s1 = typeinfer_expr env e1
+        let t2, s2 = typeinfer_expr env e2
+        let v = add_tyvar
+        //I add a fresh variables (the right of the arrow type) and I unify t1 and "t2" (t2 = t2->tyvar)
+        let final_subs = compose_subst (compose_subst (unify t1 (TyArrow (t2, v))) s1) s2
+        (apply_subst v final_subs, final_subs)
+
+    | _ -> unexpected_error "typeinfer_expr: unsupported expression: %s [AST: %A]" (pretty_expr e) e
 
 
-//I rebind to this so whenever You call type inference I append the env. Another trick!
-//let typeinfer_expr env e = typeinfer_expr (gamma0 @ env) e
 
 // type checker
 //

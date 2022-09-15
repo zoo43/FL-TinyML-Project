@@ -1,0 +1,3 @@
+- apply_subst , casi..?
+- Var
+- Op Binari

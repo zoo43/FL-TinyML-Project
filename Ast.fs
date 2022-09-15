@@ -94,6 +94,7 @@ type value =
     | VTuple of value list
     | Closure of value env * string * expr
     | RecClosure of value env * string * string * expr
+    | NativeClosure of value env * string * (value -> value)
 
 type interactive = IExpr of expr | IBinding of binding
 
@@ -137,8 +138,23 @@ let rec pretty_expr e =
     | Lambda (x, None, e) -> sprintf "fun %s -> %s" x (pretty_expr e)
     | Lambda (x, Some t, e) -> sprintf "fun (%s : %s) -> %s" x (pretty_ty t) (pretty_expr e)
     
-    // TODO pattern-match sub-application cases
-    | App (e1, e2) -> sprintf "%s %s" (pretty_expr e1) (pretty_expr e2)
+    | App (e1, e2) ->
+        let app_sprintf s1 s2 = sprintf "%s %s" (pretty_expr s1) (pretty_expr s2)
+        match e1 with
+        | Var ("+")  
+        | Var ("-")  
+        | Var ("*")  
+        | Var ("/")  
+        | Var ("%")  
+        | Var ("<")  
+        | Var (">")  
+        | Var ("=")  
+        | Var ("<>") 
+        | Var ("<=") 
+        | Var (">=") 
+        | Var ("and")
+        | Var ("or") -> app_sprintf e2 e1
+        | _ -> app_sprintf e1 e2
 
     | Var x -> x
 
@@ -178,4 +194,8 @@ let rec pretty_value v =
     | Closure (env, x, e) -> sprintf "<|%s;%s;%s|>" (pretty_env pretty_value env) x (pretty_expr e)
     
     | RecClosure (env, f, x, e) -> sprintf "<|%s;%s;%s;%s|>" (pretty_env pretty_value env) f x (pretty_expr e)
+
+    | NativeClosure (env, x, _) -> 
+        let op, _ = (List.head env)
+        sprintf "[op %s]" op
     
