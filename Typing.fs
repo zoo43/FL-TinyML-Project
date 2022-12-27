@@ -36,7 +36,7 @@ let rec freevars_ty (t : ty) : tyvar Set =
 let rec unify (t1 : ty) (t2 : ty) : subst = //empty list, empty substitution
     match (t1 , t2) with
     | TyName tn1, TyName tn2 -> if tn1 = tn2 then [] else type_error "unify: cannot unify %s with %s" tn1 tn2
-    | TyVar tv1, TyVar tv2 -> if tv1 = tv2 then [] else type_error "unify: cannot unify" //Doesn't work
+  //  | TyVar tv1, TyVar tv2 -> if tv1 = tv2 then [] else type_error "unify: cannot unify" //Doesn't work
     | (TyVar tv, tn)  //Check if variables are free, if they are then I can create the substitution, else I can't 
     | (tn, TyVar tv) -> if not (Set.contains tv (freevars_ty tn)) then [(tv, tn)] else type_error "unify: cannot unify %s with %s" (pretty_ty tn) (pretty_ty (TyVar tv))
     | (TyArrow(a,b) , TyArrow(c,d)) -> unify a c @ unify b d

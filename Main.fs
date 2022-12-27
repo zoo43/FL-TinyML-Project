@@ -70,14 +70,87 @@ let main_interactive () =
 
             printfn "val %s : %s = %s" x (pretty_ty t) (pretty_value v)
 
+// Questo è praticamente un fold
+let rec map =
+    fun f -> 
+        fun l ->
+            fun m ->
+        match l with
+        | [] -> m
+        | x::xs -> map f xs (f x m)
+
+let rec filter f l =
+    match l with
+    | [] -> []
+    | x :: xs -> if f x then x:: filter f xs else filter f xs
+
+let check x y = if x > y then x else y
+
+
+type tree = Leaf of int | Node of tree * tree * int 
+
+let rec print_tree t =
+    match t with
+    | Leaf (v) -> printfn("%O") v
+    | Node (t1,t2,v) ->
+        print_tree t1
+        print_tree t2
+        printfn("%O") v
+
+let rec print_tree_max t m =
+    match t with
+    | Leaf (v) -> check v m
+    | Node (t1,t2,v) ->
+        check (print_tree_max t2 m) (check (print_tree_max t1 m) v)
+
+let rec print_tree_sum t m =
+    match t with
+    | Leaf (v) -> 
+        let s = m+v
+        s
+    | Node (t1,t2,v) ->
+        (print_tree_sum t1 m + print_tree_sum t2 m)+v
+
+
+let rec foldR f z l =
+    match l with
+    | [] -> z
+    | x :: xs -> f (foldR f z xs) x 
+
+
+// foldL : ('b -> 'a -> 'b) -> 'b -> 'a list -> 'b
+let rec foldL f z l =
+    match l with
+    | [] -> z
+    | x :: xs -> foldL f (f z x) xs
+
+
+
+
 
 [<EntryPoint>]
 let main argv =
-    let c = fun x -> fun y -> x+y
-    let k = c 8 9
-    printf("%O") k
-    main_interactive ()
+    //let c = fun x -> fun y -> x+y
+    //let k = c 8 9
+    let l = [2;5;7;13;64;127;32]
+    let g = map (fun x -> fun y -> 
+            if x>y 
+            then if x%2=0 then x else y 
+            else y) l 0
 
+    let g2 = filter (fun x -> if x%2 = 0 then true else false) l
+    let g2 = map (fun x y -> if x > y then x else y) g2 0
+    
+    let treeO = Node (Node (Node (Leaf 1, Leaf 2,10), Leaf 3, 7), Leaf 4, 1)
+    
+    let s1 = foldL (+) "" ["a"; "b"; "c"]  
+    let s2 = foldR (+) "" ["a"; "b"; "c"] 
+    printfn("%O") s1
+    printfn("%O") s2
+    //let tree1, tree2 = divide_list l
+   // print_tree tree1
+    main_interactive ()
+   // main_interpreter "test.tml"
     
     Console.ReadLine () |> ignore
     0
