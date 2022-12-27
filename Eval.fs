@@ -1,6 +1,6 @@
 ﻿(*
 * TinyML
-* Eval.fs: evaluator
+* Eval.fs: evaluator, runtime
 *)
 
 

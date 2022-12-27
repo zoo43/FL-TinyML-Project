@@ -64,6 +64,12 @@ type lit = LInt of int
 
 type binding = bool * string * ty option * expr    // (is_recursive, id, optional_type_annotation, expression)
 
+
+//In AST we need only to say that it's a lambda and represents the parameter and the body (expression)
+
+//All possible types of expression
+
+//Abstract representation of the tree, with the tree we can throw away irrelevant info like keywords
 and expr = 
     | Lit of lit
     | Lambda of string * ty option * expr
